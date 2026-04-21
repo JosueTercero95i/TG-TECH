@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>iPhone POS - Sistema de Facturación</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="theme-color" content="#f2f2f7">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="app" class="app-container">
+        <!-- Header / Business Info -->
+        <header class="app-header">
+            <div class="logo-area">
+                <img src="TGTECH.png" alt="TG TECH" class="app-logo-img">
+                <h1 id="business-name" contenteditable="true" spellcheck="false">TG TECH</h1>
+            </div>
+            <div class="header-actions">
+                <button id="btn-connect-bt" class="btn-status">
+                    <span class="status-dot"></span>
+                    <span class="status-text">Conectar BT</span>
+                </button>
+                <button id="toggle-history" class="btn-icon" aria-label="Ver Historial">
+                    <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89l.07.14L9 12H6a7 7 0 1 1 7 7a7.07 7.07 0 0 1-6-3.18l-1.42 1.42A8.9 8.9 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.53l.72-1.22l-3.5-2.08V8z"/></svg>
+                </button>
+            </div>
+        </header>
+
+        <main class="pos-grid">
+            <!-- Product Selection Section -->
+            <section class="selection-section">
+                <div class="selection-card">
+                    <h2>1. Seleccionar Modelo</h2>
+                    <div id="model-grid" class="touch-grid">
+                        <button class="btn-card" data-model="11">11</button>
+                        <button class="btn-card" data-model="12">12</button>
+                        <button class="btn-card" data-model="13">13</button>
+                        <button class="btn-card" data-model="14">14</button>
+                        <button class="btn-card" data-model="15">15</button>
+                        <button class="btn-card" data-model="16">16</button>
+                        <button class="btn-card" data-model="17">17</button>
+                    </div>
+                </div>
+
+                <div class="selection-card">
+                    <h2>2. Seleccionar Tipo</h2>
+                    <div id="type-grid" class="touch-grid">
+                        <button class="btn-card" data-type="Normal">Normal</button>
+                        <button class="btn-card" data-type="Pro">Pro</button>
+                        <button class="btn-card" data-type="Pro Max">Pro Max</button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Input Details / Summary Section -->
+            <section class="details-section">
+                <div class="details-card">
+                    <div class="summary-line">
+                        <span class="label">Producto:</span>
+                        <span id="display-product" class="value placeholder">Selecciona modelo y tipo</span>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="customer-name">Nombre del Cliente</label>
+                        <input type="text" id="customer-name" placeholder="Ej: Juan Pérez" required>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="imei-input">IMEI (Últimos 4 dígitos)</label>
+                        <input type="text" id="imei-input" placeholder="0000" maxlength="4" inputmode="numeric">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="price-input">Precio</label>
+                        <input type="number" id="price-input" placeholder="0.00" step="0.01" inputmode="decimal">
+                    </div>
+
+                    <div class="dual-input">
+                        <div class="input-group">
+                            <label>Días Garantía</label>
+                            <input type="number" id="warranty-input" value="30">
+                        </div>
+                        <div class="input-group">
+                            <label>Método de Pago</label>
+                            <select id="payment-method">
+                                <option value="Efectivo C$">Efectivo (C$)</option>
+                                <option value="Efectivo $">Efectivo ($)</option>
+                                <option value="Transferencia">Transferencia</option>
+                                <option value="Tarjeta">Tarjeta</option>
+                                <option value="Financiado">Financiado</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label>Efectivo Recibido</label>
+                        <input type="number" id="cash-input" placeholder="0.00">
+                    </div>
+
+                    <div class="summary-row">
+                        <span class="s-label">Cambio:</span>
+                        <span id="display-change" class="s-value">$0.00</span>
+                    </div>
+
+                    <div class="total-display">
+                        <span class="total-label">Total a Cobrar</span>
+                        <span id="display-total" class="total-value">$0.00</span>
+                    </div>
+
+                    <div class="actions-grid">
+                        <button id="btn-print" class="btn-primary" disabled>
+                            <span>Imprimir Ticket</span>
+                        </button>
+                        <button id="btn-clear" class="btn-secondary">Limpiar</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Sidebar History (Hidden by default) -->
+        <aside id="history-sidebar" class="sidebar">
+            <div class="sidebar-header">
+                <h3>Historial de Ventas</h3>
+                <button id="close-history" class="btn-close">&times;</button>
+            </div>
+            <div id="history-list" class="sidebar-content">
+                <!-- Sales records will appear here -->
+                <p class="empty-msg">No hay ventas registradas</p>
+            </div>
+            <div class="sidebar-footer">
+                <button id="btn-clear-history" class="btn-danger">Borrar Todo</button>
+            </div>
+        </aside>
+
+        <!-- Invisible Print Template -->
+        <div id="print-template" class="print-only">
+            <div class="ticket">
+                <div class="ticket-header">
+                    <img src="TGTECH.png" alt="Logo" class="print-logo">
+                    <h2 class="print-business-name">TG TECH</h2>
+                    <p id="print-date">00/00/0000 00:00</p>
+                </div>
+                <div class="ticket-divider">********************************</div>
+                <div class="ticket-body">
+                    <div class="ticket-row">
+                        <span class="p-label">CLIENTE:</span>
+                        <span class="p-value" id="p-customer">---</span>
+                    </div>
+                    <div class="ticket-row">
+                        <span class="p-label">PRODUCTO:</span>
+                        <span class="p-value" id="p-product">---</span>
+                    </div>
+                    <div class="ticket-row">
+                        <span class="p-label">IMEI (Últ. 4):</span>
+                        <span class="p-value" id="p-imei">0000</span>
+                    </div>
+                    <div class="ticket-row">
+                        <span class="p-label">GARANTÍA:</span>
+                        <span class="p-value" id="p-warranty">30 días</span>
+                    </div>
+                    <div class="ticket-row">
+                        <span class="p-label">MÉTODO:</span>
+                        <span class="p-value" id="p-method">Efectivo</span>
+                    </div>
+                    <div class="ticket-divider">--------------------------------</div>
+                    <div class="ticket-row total">
+                        <span class="p-label">TOTAL:</span>
+                        <span class="p-value" id="p-total">$0.00</span>
+                    </div>
+                </div>
+                <div class="ticket-divider">********************************</div>
+                <div class="ticket-footer">
+                    <p>¡Gracias por su compra!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

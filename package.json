@@ -1,0 +1,40 @@
+{
+  "name": "tg-tech-pos",
+  "version": "1.0.0",
+  "description": "Sistema de Facturación POS para TG TECH",
+  "main": "main.js",
+  "author": "TG TECH",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^28.2.0",
+    "electron-builder": "^24.9.1"
+  },
+  "build": {
+    "appId": "com.tgtech.pos",
+    "productName": "TG TECH POS",
+    "directories": {
+      "output": "dist"
+    },
+    "win": {
+      "target": "nsis",
+      "icon": "TGTECH.png"
+    },
+    "nsis": {
+      "oneClick": true,
+      "allowToChangeInstallationDirectory": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "TG TECH POS"
+    },
+    "files": [
+      "index.html",
+      "style.css",
+      "app.js",
+      "main.js",
+      "TGTECH.png"
+    ]
+  }
+}
