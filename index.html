@@ -3,38 +3,52 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>iPhone POS - Sistema de Facturación</title>
+    <title>POS Minimalista</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-    <meta name="theme-color" content="#f2f2f7">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] }
+                }
+            }
+        }
+    </script>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <div id="app" class="app-container">
-        <!-- Header / Business Info -->
-        <header class="app-header">
-            <div class="logo-area">
-                <img src="TGTECH.png" alt="TG TECH" class="app-logo-img">
-                <h1 id="business-name" contenteditable="true" spellcheck="false">TG TECH</h1>
+<body class="bg-gray-50 text-gray-900 font-sans font-light antialiased min-h-screen">
+    <!-- Loading Overlay -->
+    <div id="loader" class="fixed inset-0 bg-gray-50 z-[9999] flex items-center justify-center transition-opacity duration-500">
+        <div class="flex flex-col items-center gap-4">
+            <div class="w-8 h-8 border-2 border-gray-200 border-t-gray-800 rounded-full animate-spin"></div>
+        </div>
+    </div>
+
+    <div id="app" class="min-h-screen lg:h-screen max-w-[1400px] mx-auto p-4 md:p-6 lg:p-8 flex flex-col gap-4 overflow-y-auto lg:overflow-hidden">
+        <!-- Header -->
+        <header class="flex justify-between items-center gsap-fade shrink-0">
+            <div class="flex items-center gap-3">
+                <img src="TGTECH.png" alt="Logo" class="h-8 w-auto rounded-lg">
+                <h1 id="business-name" class="text-xl font-normal tracking-wide text-gray-900" contenteditable="true" spellcheck="false">TG TECH</h1>
             </div>
-            <div class="header-actions">
-                <button id="btn-connect-bt" class="btn-status">
-                    <span class="status-dot"></span>
+            <div class="flex items-center gap-3">
+                <button id="btn-connect-bt" class="flex items-center gap-2 px-3 py-1.5 rounded-2xl bg-white border border-gray-200 shadow-sm transition-colors text-sm font-light text-gray-600 focus:outline-none">
+                    <span class="w-2 h-2 rounded-full bg-red-400 status-dot transition-colors"></span>
                     <span class="status-text">Conectar BT</span>
-                </button>
-                <button id="toggle-history" class="btn-icon" aria-label="Ver Historial">
-                    <svg viewBox="0 0 24 24" width="24" height="24"><path fill="currentColor" d="M13 3a9 9 0 0 0-9 9H1l3.89 3.89l.07.14L9 12H6a7 7 0 1 1 7 7a7.07 7.07 0 0 1-6-3.18l-1.42 1.42A8.9 8.9 0 0 0 13 21a9 9 0 0 0 0-18zm-1 5v5l4.28 2.53l.72-1.22l-3.5-2.08V8z"/></svg>
                 </button>
             </div>
         </header>
 
-        <main class="pos-grid">
-            <!-- Product Selection Section -->
-            <section class="selection-section">
-                <div class="selection-card">
-                    <h2>1. Seleccionar Modelo</h2>
-                    <div id="model-grid" class="touch-grid">
+        <main class="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-6 lg:flex-1 lg:overflow-hidden items-start lg:items-stretch">
+            <!-- Product Selection (Left Side) -->
+            <section class="flex flex-col gap-4 lg:overflow-y-auto lg:pr-2 custom-scrollbar">
+                <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-200 gsap-slide">
+                    <h2 class="text-[10px] text-gray-600 uppercase tracking-widest mb-4">1. Modelo</h2>
+                    <div id="model-grid" class="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-5 gap-2 mb-8">
                         <button class="btn-card" data-model="11">11</button>
                         <button class="btn-card" data-model="12">12</button>
                         <button class="btn-card" data-model="13">13</button>
@@ -43,135 +57,119 @@
                         <button class="btn-card" data-model="16">16</button>
                         <button class="btn-card" data-model="17">17</button>
                     </div>
-                </div>
 
-                <div class="selection-card">
-                    <h2>2. Seleccionar Tipo</h2>
-                    <div id="type-grid" class="touch-grid">
+                    <h2 class="text-[10px] text-gray-600 uppercase tracking-widest mb-4">2. Tipo</h2>
+                    <div id="type-grid" class="grid grid-cols-3 gap-2">
                         <button class="btn-card" data-type="Normal">Normal</button>
                         <button class="btn-card" data-type="Pro">Pro</button>
                         <button class="btn-card" data-type="Pro Max">Pro Max</button>
                     </div>
                 </div>
+
+                <div class="bg-white rounded-3xl p-6 shadow-sm border border-gray-200 gsap-slide hidden lg:block shrink-0">
+                     <div class="flex items-center justify-between">
+                        <div>
+                            <span class="block text-[10px] text-gray-600 uppercase tracking-widest mb-1">Estado del Sistema</span>
+                            <span class="text-sm text-gray-600 font-light">Listo para procesar nueva venta</span>
+                        </div>
+                        <i class="fa-solid fa-circle-check text-emerald-400 text-3xl"></i>
+                     </div>
+                </div>
             </section>
 
-            <!-- Input Details / Summary Section -->
-            <section class="details-section">
-                <div class="details-card">
-                    <div class="summary-line">
-                        <span class="label">Producto:</span>
-                        <span id="display-product" class="value placeholder">Selecciona modelo y tipo</span>
+            <!-- Details Section (Right Side) -->
+            <section class="bg-white rounded-3xl p-6 shadow-sm border border-gray-200 gsap-slide flex flex-col lg:h-full lg:overflow-hidden">
+                <div class="lg:overflow-y-auto lg:flex-1 lg:pr-2 custom-scrollbar space-y-4">
+                    <div class="bg-gray-50 rounded-[1.25rem] p-4 border border-gray-200">
+                        <span class="block text-[10px] text-gray-600 uppercase tracking-widest mb-1">Producto</span>
+                        <span id="display-product" class="text-lg font-normal text-gray-600 placeholder">Selecciona modelo</span>
                     </div>
 
-                    <div class="input-group">
-                        <label for="customer-name">Nombre del Cliente</label>
-                        <input type="text" id="customer-name" placeholder="Ej: Juan Pérez" required>
-                    </div>
-
-                    <div class="input-group">
-                        <label for="imei-input">IMEI (Últimos 4 dígitos)</label>
-                        <input type="text" id="imei-input" placeholder="0000" maxlength="4" inputmode="numeric">
-                    </div>
-
-                    <div class="input-group">
-                        <label for="price-input">Precio</label>
-                        <input type="number" id="price-input" placeholder="0.00" step="0.01" inputmode="decimal">
-                    </div>
-
-                    <div class="dual-input">
-                        <div class="input-group">
-                            <label>Días Garantía</label>
-                            <input type="number" id="warranty-input" value="30">
+                    <div class="space-y-4">
+                        <div>
+                            <label for="customer-name" class="block text-[10px] text-gray-600 uppercase tracking-widest mb-1.5 ml-1">Cliente</label>
+                            <input type="text" id="customer-name" class="w-full bg-gray-50 border border-gray-200 rounded-[1.1rem] p-3.5 focus:bg-white focus:border-gray-300 focus:outline-none transition-colors font-light text-gray-900 text-sm placeholder-gray-500" placeholder="Nombre completo">
                         </div>
-                        <div class="input-group">
-                            <label>Método de Pago</label>
-                            <select id="payment-method">
-                                <option value="Efectivo C$">Efectivo (C$)</option>
-                                <option value="Efectivo $">Efectivo ($)</option>
-                                <option value="Transferencia">Transferencia</option>
-                                <option value="Tarjeta">Tarjeta</option>
-                                <option value="Financiado">Financiado</option>
-                            </select>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label for="imei-input" class="block text-[10px] text-gray-600 uppercase tracking-widest mb-1.5 ml-1">IMEI (Últ. 4)</label>
+                                <input type="text" id="imei-input" class="w-full bg-gray-50 border border-gray-200 rounded-[1.1rem] p-3.5 focus:bg-white focus:border-gray-300 focus:outline-none transition-colors font-light text-gray-900 text-sm placeholder-gray-500" placeholder="0000" maxlength="4" inputmode="numeric">
+                            </div>
+                            <div>
+                                <label for="price-input" class="block text-[10px] text-gray-600 uppercase tracking-widest mb-1.5 ml-1">Precio</label>
+                                <input type="number" id="price-input" class="w-full bg-gray-50 border border-gray-200 rounded-[1.1rem] p-3.5 focus:bg-white focus:border-gray-300 focus:outline-none transition-colors font-light text-gray-900 text-sm placeholder-gray-500" placeholder="0.00" step="0.01" inputmode="decimal">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[10px] text-gray-600 uppercase tracking-widest mb-1.5 ml-1">Garantía</label>
+                                <input type="number" id="warranty-input" class="w-full bg-gray-50 border border-gray-200 rounded-[1.1rem] p-3.5 focus:bg-white focus:border-gray-300 focus:outline-none transition-colors font-light text-gray-900 text-sm" value="30">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-gray-600 uppercase tracking-widest mb-1.5 ml-1">Método</label>
+                                <select id="payment-method" class="w-full bg-gray-50 border border-gray-200 rounded-[1.1rem] p-3.5 focus:bg-white focus:border-gray-300 focus:outline-none transition-colors font-light text-gray-900 text-sm appearance-none">
+                                    <option value="Efectivo C$">Efectivo (C$)</option>
+                                    <option value="Efectivo $">Efectivo ($)</option>
+                                    <option value="Transferencia">Transferencia</option>
+                                    <option value="Tarjeta">Tarjeta</option>
+                                    <option value="Financiado">Financiado</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-[10px] text-gray-600 uppercase tracking-widest mb-1.5 ml-1">Efectivo Recibido</label>
+                            <input type="number" id="cash-input" class="w-full bg-gray-50 border border-gray-200 rounded-[1.1rem] p-3.5 focus:bg-white focus:border-gray-300 focus:outline-none transition-colors font-light text-gray-900 text-sm placeholder-gray-500" placeholder="0.00">
                         </div>
                     </div>
+                </div>
 
-                    <div class="input-group">
-                        <label>Efectivo Recibido</label>
-                        <input type="number" id="cash-input" placeholder="0.00">
+                <div class="mt-4 pt-4 border-t border-gray-50 shrink-0">
+                    <div class="flex justify-between items-center mb-3 px-2">
+                        <span class="text-xs text-gray-600 font-light">Cambio:</span>
+                        <span id="display-change" class="text-lg font-normal text-gray-900">$0.00</span>
                     </div>
 
-                    <div class="summary-row">
-                        <span class="s-label">Cambio:</span>
-                        <span id="display-change" class="s-value">$0.00</span>
+                    <div class="bg-gray-800 text-white p-5 rounded-2xl text-center mb-4 shadow-sm transition-colors">
+                        <span class="block text-[9px] text-gray-600 uppercase tracking-widest mb-1">Total a Cobrar</span>
+                        <span id="display-total" class="text-3xl font-normal tracking-tight">$0.00</span>
                     </div>
 
-                    <div class="total-display">
-                        <span class="total-label">Total a Cobrar</span>
-                        <span id="display-total" class="total-value">$0.00</span>
-                    </div>
-
-                    <div class="actions-grid">
-                        <button id="btn-print" class="btn-primary" disabled>
-                            <span>Imprimir Ticket</span>
+                    <div class="grid grid-cols-[1fr_auto] gap-3">
+                        <button id="btn-print" class="bg-gray-800 text-white rounded-[1.1rem] py-4 px-6 text-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-900 focus:outline-none font-normal" disabled>
+                            Imprimir Ticket
                         </button>
-                        <button id="btn-clear" class="btn-secondary">Limpiar</button>
+                        <button id="btn-clear" class="bg-gray-50 text-gray-600 rounded-[1.1rem] py-4 px-6 transition-all hover:bg-gray-100 border border-gray-200 focus:outline-none">
+                            <i class="fa-solid fa-trash-can text-xl"></i>
+                        </button>
                     </div>
                 </div>
             </section>
         </main>
 
-        <!-- Sidebar History (Hidden by default) -->
-        <aside id="history-sidebar" class="sidebar">
-            <div class="sidebar-header">
-                <h3>Historial de Ventas</h3>
-                <button id="close-history" class="btn-close">&times;</button>
-            </div>
-            <div id="history-list" class="sidebar-content">
-                <!-- Sales records will appear here -->
-                <p class="empty-msg">No hay ventas registradas</p>
-            </div>
-            <div class="sidebar-footer">
-                <button id="btn-clear-history" class="btn-danger">Borrar Todo</button>
-            </div>
-        </aside>
+
 
         <!-- Invisible Print Template -->
         <div id="print-template" class="print-only">
             <div class="ticket">
                 <div class="ticket-header">
-                    <img src="TGTECH.png" alt="Logo" class="print-logo">
+                    <img src="TGTECH.png" alt="Logo" class="h-12 w-auto mx-auto mb-2 opacity-90">
                     <h2 class="print-business-name">TG TECH</h2>
                     <p id="print-date">00/00/0000 00:00</p>
                 </div>
-                <div class="ticket-divider">********************************</div>
+                <div class="ticket-divider"></div>
                 <div class="ticket-body">
-                    <div class="ticket-row">
-                        <span class="p-label">CLIENTE:</span>
-                        <span class="p-value" id="p-customer">---</span>
-                    </div>
-                    <div class="ticket-row">
-                        <span class="p-label">PRODUCTO:</span>
-                        <span class="p-value" id="p-product">---</span>
-                    </div>
-                    <div class="ticket-row">
-                        <span class="p-label">IMEI (Últ. 4):</span>
-                        <span class="p-value" id="p-imei">0000</span>
-                    </div>
-                    <div class="ticket-row">
-                        <span class="p-label">GARANTÍA:</span>
-                        <span class="p-value" id="p-warranty">30 días</span>
-                    </div>
-                    <div class="ticket-row">
-                        <span class="p-label">MÉTODO:</span>
-                        <span class="p-value" id="p-method">Efectivo</span>
-                    </div>
-                    <div class="ticket-divider">--------------------------------</div>
-                    <div class="ticket-row total">
-                        <span class="p-label">TOTAL:</span>
-                        <span class="p-value" id="p-total">$0.00</span>
-                    </div>
+                    <div class="ticket-row"><span class="p-label">CLIENTE:</span><span class="p-value" id="p-customer">---</span></div>
+                    <div class="ticket-row"><span class="p-label">PRODUCTO:</span><span class="p-value" id="p-product">---</span></div>
+                    <div class="ticket-row"><span class="p-label">IMEI (Ult):</span><span class="p-value" id="p-imei">0000</span></div>
+                    <div class="ticket-row"><span class="p-label">GARANTIA:</span><span class="p-value" id="p-warranty">30 dias</span></div>
+                    <div class="ticket-row"><span class="p-label">METODO:</span><span class="p-value" id="p-method">Efectivo</span></div>
+                    <div class="ticket-divider"></div>
+                    <div class="ticket-row total"><span class="p-label">TOTAL:</span><span class="p-value" id="p-total">$0.00</span></div>
                 </div>
-                <div class="ticket-divider">********************************</div>
+                <div class="ticket-divider"></div>
                 <div class="ticket-footer">
                     <p>¡Gracias por su compra!</p>
                 </div>
@@ -179,6 +177,20 @@
         </div>
     </div>
 
+    <!-- GSAP & Main Script -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
     <script src="app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            gsap.fromTo('.gsap-fade', 
+                { opacity: 0, y: -10 }, 
+                { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out' }
+            );
+            gsap.fromTo('.gsap-slide', 
+                { opacity: 0, y: 40 }, 
+                { opacity: 1, y: 0, duration: 0.8, stagger: 0.15, ease: 'power3.out', delay: 0.2 }
+            );
+        });
+    </script>
 </body>
 </html>

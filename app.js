@@ -8,8 +8,7 @@ document.addEventListener('DOMContentLoaded', () => {
         price: '',
         warranty: '30',
         paymentMethod: 'Efectivo C$',
-        cashReceived: '',
-        history: JSON.parse(localStorage.getItem('iphone_sales') || '[]')
+        cashReceived: ''
     };
 
     // DOM Elements
@@ -28,13 +27,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnClear = document.getElementById('btn-clear');
     const businessNameEl = document.getElementById('business-name');
     
-    // Sidebar Elements
-    const historySidebar = document.getElementById('history-sidebar');
-    const toggleHistoryBtn = document.getElementById('toggle-history');
-    const closeHistoryBtn = document.getElementById('close-history');
-    const historyList = document.getElementById('history-list');
-    const clearHistoryBtn = document.getElementById('btn-clear-history');
-
     // Bluetooth State
     let printerDevice = null;
     let printerCharacteristic = null;
@@ -87,7 +79,15 @@ document.addEventListener('DOMContentLoaded', () => {
         logoBytes = new Uint8Array(header.length + bytes.length);
         logoBytes.set(header);
         logoBytes.set(bytes, header.length);
-        alert('Logo cargado y centrado con éxito');
+        
+        // Ocultar loader con un pequeño retraso intencional para que sea visible
+        setTimeout(() => {
+            const loader = document.getElementById('loader');
+            if (loader) {
+                loader.style.opacity = '0';
+                setTimeout(() => loader.remove(), 500);
+            }
+        }, 1200);
     }
 
     // Set Default Business Name
@@ -97,28 +97,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
         businessNameEl.innerText = localStorage.getItem('iphone_business_name');
     }
-
-    // History Sidebar Logic
-    toggleHistoryBtn.addEventListener('click', () => {
-        historySidebar.classList.add('show');
-        playClickSound();
-    });
-
-    closeHistoryBtn.addEventListener('click', () => {
-        historySidebar.classList.remove('show');
-        playClickSound();
-    });
-
-    clearHistoryBtn.addEventListener('click', () => {
-        if (confirm('¿Estás seguro de que quieres borrar todo el historial?')) {
-            state.history = [];
-            localStorage.setItem('iphone_sales', JSON.stringify([]));
-            renderHistory();
-            playClickSound();
-        }
-    });
-
-    renderHistory();
 
     // Bluetooth Logic
     btnConnectBT.addEventListener('click', async () => {
@@ -303,7 +281,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!validateForm()) {
             alert('Por favor complete todos los campos obligatorios'); return;
         }
-        saveSale();
         updatePrintTemplate();
         if (printerCharacteristic) { await printToBluetooth(); } else { window.print(); }
         triggerSuccess();
@@ -386,50 +363,36 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    function saveSale() {
-        const sale = {
-            id: Date.now(),
-            customer: state.customerName,
-            product: `iPhone ${state.model} ${state.type}`,
-            imei: state.imei,
-            price: state.price,
-            warranty: state.warranty,
-            date: new Date().toISOString()
-        };
-        state.history.unshift(sale);
-        localStorage.setItem('iphone_sales', JSON.stringify(state.history));
-        renderHistory();
-    }
-
-    function renderHistory() {
-        if (state.history.length === 0) {
-            historyList.innerHTML = '<p class="empty-msg">No hay ventas registradas</p>';
-            return;
-        }
-
-        historyList.innerHTML = state.history.map(sale => `
-            <div class="sale-item">
-                <div class="sale-info">
-                    <h4>${sale.product}</h4>
-                    <p>${sale.customer || 'Sin cliente'}</p>
-                    <p>IMEI: ...${sale.imei} | ${new Date(sale.date).toLocaleString([], { dateStyle: 'short', timeStyle: 'short' })}</p>
-                </div>
-                <span class="sale-price">$${parseFloat(sale.price).toFixed(2)}</span>
-            </div>
-        `).join('');
-    }
-
     function triggerSuccess() {
-        const feedback = document.createElement('div');
-        feedback.className = 'success-feedback';
-        feedback.innerText = '✅ Ticket Generado';
-        document.body.appendChild(feedback);
+        const overlay = document.createElement('div');
+        overlay.className = 'success-overlay';
+        overlay.innerHTML = `
+            <div class="success-modal">
+                <div class="success-circle-container">
+                    <svg class="success-svg" viewBox="0 0 100 100">
+                        <circle class="success-circle-bg" cx="50" cy="50" r="45"></circle>
+                        <circle class="success-circle-path" cx="50" cy="50" r="45"></circle>
+                    </svg>
+                    <div class="success-check">
+                        <i class="fa-solid fa-check"></i>
+                    </div>
+                </div>
+                <div class="success-content">
+                    <h3 class="success-title">Venta Exitosa</h3>
+                    <p class="success-msg">El ticket ha sido procesado e impreso correctamente.</p>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(overlay);
         
-        setTimeout(() => feedback.classList.add('show'), 10);
+        // Trigger animations
+        setTimeout(() => overlay.classList.add('show'), 10);
+        
+        // Auto remove after 3.5s
         setTimeout(() => {
-            feedback.classList.remove('show');
-            setTimeout(() => feedback.remove(), 500);
-        }, 2000);
+            overlay.classList.add('hide');
+            setTimeout(() => overlay.remove(), 600);
+        }, 3500);
     }
 
     function playClickSound() {
@@ -446,25 +409,123 @@ document.addEventListener('DOMContentLoaded', () => {
         osc.start();
         osc.stop(ctx.currentTime + 0.1);
     }
+
+    // Safety fallback: Ocultar loader si algo falla tras 3 segundos
+    setTimeout(() => {
+        const loader = document.getElementById('loader');
+        if (loader) {
+            loader.style.opacity = '0';
+            setTimeout(() => loader.remove(), 500);
+        }
+    }, 3000);
 });
 
-// Extra style for notification
+// Premium Success Modal Styles
 const style = document.createElement('style');
 style.textContent = `
-.success-feedback {
+.success-overlay {
     position: fixed;
-    top: 20px;
-    left: 50%;
-    transform: translateX(-50%) translateY(-100px);
-    background: #4cd964;
-    color: white;
-    padding: 12px 24px;
-    border-radius: 30px;
-    font-weight: 600;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-    z-index: 1000;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+    opacity: 0;
+    transition: opacity 0.4s ease;
 }
-.success-feedback.show { transform: translateX(-50%) translateY(0); }
+
+.success-overlay.show { opacity: 1; }
+.success-overlay.hide { opacity: 0; }
+
+.success-modal {
+    background: white;
+    padding: 40px;
+    border-radius: 40px;
+    box-shadow: 0 30px 60px -12px rgba(0,0,0,0.15);
+    text-align: center;
+    transform: scale(0.8) translateY(20px);
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    max-width: 380px;
+    width: 90%;
+    border: 1px solid rgba(0,0,0,0.03);
+}
+
+.success-overlay.show .success-modal {
+    transform: scale(1) translateY(0);
+}
+
+.success-circle-container {
+    position: relative;
+    width: 100px;
+    height: 100px;
+    margin: 0 auto 24px;
+}
+
+.success-svg {
+    width: 100%;
+    height: 100%;
+    transform: rotate(-90deg);
+}
+
+.success-circle-bg {
+    fill: none;
+    stroke: #f3f4f6;
+    stroke-width: 6;
+}
+
+.success-circle-path {
+    fill: none;
+    stroke: #10b981;
+    stroke-width: 6;
+    stroke-linecap: round;
+    stroke-dasharray: 283;
+    stroke-dashoffset: 283;
+    transition: stroke-dashoffset 1.5s ease-in-out;
+}
+
+.success-overlay.show .success-circle-path {
+    stroke-dashoffset: 0;
+}
+
+.success-check {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    color: #10b981;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.5) 1.2s;
+}
+
+.success-overlay.show .success-check {
+    opacity: 1;
+    transform: scale(1);
+}
+
+.success-title {
+    font-size: 24px;
+    font-weight: 400;
+    color: #111827;
+    margin-bottom: 8px;
+    letter-spacing: -0.5px;
+}
+
+.success-msg {
+    font-size: 15px;
+    color: #6b7280;
+    font-weight: 300;
+    line-height: 1.5;
+}
+
+@keyframes modalPop {
+    0% { transform: scale(0.8); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
 `;
 document.head.appendChild(style);
