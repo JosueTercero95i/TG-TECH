@@ -100,6 +100,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Bluetooth Logic
     btnConnectBT.addEventListener('click', async () => {
+        if (!navigator.bluetooth) {
+            alert('Tu navegador no soporta Bluetooth Web. En iPhone, usa el navegador "Bluefy". En Android, usa Chrome.');
+            return;
+        }
         if (printerDevice && printerDevice.gatt.connected) {
             await printerDevice.gatt.disconnect();
             onDisconnected();
@@ -119,7 +123,11 @@ document.addEventListener('DOMContentLoaded', () => {
             printerCharacteristic = characteristic;
             onConnected();
         } catch (error) {
+            console.error(error);
             statusText.innerText = 'Conectar BT';
+            if (error.name !== 'NotFoundError') {
+                alert('No se pudo establecer conexión con la impresora.');
+            }
         }
     });
 
@@ -282,8 +290,19 @@ document.addEventListener('DOMContentLoaded', () => {
             alert('Por favor complete todos los campos obligatorios'); return;
         }
         updatePrintTemplate();
-        if (printerCharacteristic) { await printToBluetooth(); } else { window.print(); }
-        triggerSuccess();
+        
+        if (printerCharacteristic) { 
+            await printToBluetooth(); 
+            triggerSuccess();
+        } else { 
+            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+            if (isMobile) {
+                alert('Impresora no conectada. Conéctala vía Bluetooth para imprimir.');
+            } else {
+                window.print();
+                triggerSuccess();
+            }
+        }
     });
 
     function updatePrintTemplate() {
