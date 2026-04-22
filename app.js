@@ -285,23 +285,20 @@ document.addEventListener('DOMContentLoaded', () => {
         validateForm();
     }
 
-    btnPrint.addEventListener('click', async () => {
+    btnPrint.addEventListener('click', () => {
         if (!validateForm()) {
             alert('Por favor complete todos los campos obligatorios'); return;
         }
         updatePrintTemplate();
         
         if (printerCharacteristic) { 
-            await printToBluetooth(); 
-            triggerSuccess();
+            // Bluetooth printing is naturally async
+            printToBluetooth().then(() => triggerSuccess());
         } else { 
-            const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-            if (isMobile) {
-                alert('Impresora no conectada. Conéctala vía Bluetooth para imprimir.');
-            } else {
-                window.print();
-                triggerSuccess();
-            }
+            // To avoid Safari's "automated printing" block, window.print() 
+            // should be called as directly as possible in the event chain.
+            window.print();
+            setTimeout(triggerSuccess, 500);
         }
     });
 
