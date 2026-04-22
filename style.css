@@ -99,19 +99,28 @@ input[type=number]::-webkit-outer-spin-button {
 }
 
 @media print {
+    @page {
+        size: 80mm auto;
+        margin: 0;
+    }
+    body {
+        background: white;
+        margin: 0;
+        padding: 0;
+    }
     body * { visibility: hidden; }
     .print-only, .print-only * { visibility: visible; }
     .print-only {
         position: absolute;
         left: 0;
         top: 0;
-        width: 100%;
+        width: 80mm;
     }
     
     .ticket {
         width: 80mm;
-        margin: 0;
-        padding: 0;
+        margin: 0 auto;
+        padding: 10mm 5mm;
         font-family: "Inter", sans-serif !important;
         font-weight: 400 !important;
         font-size: 12px;
