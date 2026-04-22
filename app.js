@@ -293,12 +293,12 @@ document.addEventListener('DOMContentLoaded', () => {
         
         if (printerCharacteristic) { 
             // Bluetooth printing is naturally async
-            printToBluetooth().then(() => triggerSuccess());
+            printToBluetooth().then(() => setTimeout(triggerSuccess, 2000));
         } else { 
             // To avoid Safari's "automated printing" block, window.print() 
             // should be called as directly as possible in the event chain.
             window.print();
-            setTimeout(triggerSuccess, 500);
+            setTimeout(triggerSuccess, 2000);
         }
     });
 
