@@ -7,7 +7,9 @@ document.addEventListener('DOMContentLoaded', () => {
         imei: '',
         price: '',
         warranty: '30',
-        paymentMethod: 'Efectivo C$',
+        paymentMethod: 'Efectivo',
+        currency: 'C$',
+        months: '3',
         cashReceived: ''
     };
 
@@ -22,7 +24,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const priceInput = document.getElementById('price-input');
     const warrantyInput = document.getElementById('warranty-input');
     const paymentMethodSelect = document.getElementById('payment-method');
+    const currencySelect = document.getElementById('currency-select');
     const cashInput = document.getElementById('cash-input');
+    const cashInputContainer = document.getElementById('cash-input-container');
+    const monthsInputContainer = document.getElementById('months-input-container');
+    const monthsSelect = document.getElementById('months-select');
     const btnPrint = document.getElementById('btn-print');
     const btnClear = document.getElementById('btn-clear');
     const businessNameEl = document.getElementById('business-name');
@@ -192,6 +198,27 @@ document.addEventListener('DOMContentLoaded', () => {
     
     paymentMethodSelect.addEventListener('change', (e) => {
         state.paymentMethod = e.target.value;
+        if (state.paymentMethod.startsWith('Finan')) {
+            monthsInputContainer.classList.remove('hidden');
+            cashInputContainer.classList.add('hidden');
+            state.cashReceived = '';
+            cashInput.value = '';
+            updateTotals();
+        } else {
+            monthsInputContainer.classList.add('hidden');
+            cashInputContainer.classList.remove('hidden');
+        }
+        validateForm();
+    });
+
+    currencySelect.addEventListener('change', (e) => {
+        state.currency = e.target.value;
+        updateTotals();
+        validateForm();
+    });
+
+    monthsSelect.addEventListener('change', (e) => {
+        state.months = e.target.value;
         validateForm();
     });
 
@@ -239,9 +266,9 @@ document.addEventListener('DOMContentLoaded', () => {
     function updateTotals() {
         const total = parseFloat(state.price || 0);
         const cash = parseFloat(state.cashReceived || 0);
-        displayTotal.innerText = `$${total.toFixed(2)}`;
+        displayTotal.innerText = `${state.currency}${total.toFixed(2)}`;
         const change = cash - total;
-        displayChange.innerText = `$${(change >= 0 ? change : 0).toFixed(2)}`;
+        displayChange.innerText = `${state.currency}${(change >= 0 ? change : 0).toFixed(2)}`;
         
         if (cash < total && cash > 0) {
             cashInput.classList.add('error');
@@ -264,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function resetForm() {
         state.customerName = ''; state.model = ''; state.type = ''; state.imei = ''; state.price = ''; state.cashReceived = '';
-        state.warranty = '30'; state.paymentMethod = 'Efectivo C$';
+        state.warranty = '30'; state.paymentMethod = 'Efectivo'; state.currency = 'C$'; state.months = '3';
         
         customerNameInput.value = '';
         modelButtons.forEach(b => b.classList.remove('active'));
@@ -274,7 +301,12 @@ document.addEventListener('DOMContentLoaded', () => {
         priceInput.value = ''; 
         cashInput.value = '';
         warrantyInput.value = '30';
-        paymentMethodSelect.value = 'Efectivo C$';
+        paymentMethodSelect.value = 'Efectivo';
+        currencySelect.value = 'C$';
+        monthsSelect.value = '3';
+        
+        monthsInputContainer.classList.add('hidden');
+        cashInputContainer.classList.remove('hidden');
         
         customerNameInput.classList.remove('error', 'success');
         imeiInput.classList.remove('error', 'success');
@@ -307,8 +339,13 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('p-product').innerText = `iPhone ${state.model} ${state.type}`;
         document.getElementById('p-imei').innerText = state.imei;
         document.getElementById('p-warranty').innerText = `${state.warranty} días`;
-        document.getElementById('p-method').innerText = state.paymentMethod;
-        document.getElementById('p-total').innerText = `$${parseFloat(state.price).toFixed(2)}`;
+        
+        let methodText = state.paymentMethod;
+        if (state.paymentMethod.startsWith('Finan')) {
+            methodText += ` (${state.months} Meses)`;
+        }
+        document.getElementById('p-method').innerText = `${methodText} (${state.currency})`;
+        document.getElementById('p-total').innerText = `${state.currency}${parseFloat(state.price).toFixed(2)}`;
         document.getElementById('print-date').innerText = new Date().toLocaleString();
     }
 
@@ -347,13 +384,17 @@ document.addEventListener('DOMContentLoaded', () => {
         data += LEFT + 'CLIENTE: ' + state.customerName + '\n';
         data += BOLD_ON + 'PRODUCTO: ' + `iPhone ${state.model} ${state.type}` + BOLD_OFF + '\n';
         data += 'IMEI (ULT 4): ' + state.imei + '\n';
-        data += 'PAGO: ' + state.paymentMethod + '\n';
+        let methodText = state.paymentMethod;
+        if (state.paymentMethod.startsWith('Finan')) {
+            methodText += ' (' + state.months + ' Meses)';
+        }
+        data += 'PAGO: ' + methodText + ' (' + state.currency + ')\n';
         data += 'GARANTIA: ' + state.warranty + ' DIAS\n';
         data += '--------------------------------\n';
-        data += BOLD_ON + 'TOTAL: $' + parseFloat(state.price).toFixed(2) + BOLD_OFF + '\n';
+        data += BOLD_ON + 'TOTAL: ' + state.currency + parseFloat(state.price).toFixed(2) + BOLD_OFF + '\n';
         if (state.cashReceived) {
-            data += 'RECIBIDO: $' + parseFloat(state.cashReceived).toFixed(2) + '\n';
-            data += 'CAMBIO: $' + (parseFloat(state.cashReceived) - parseFloat(state.price)).toFixed(2) + '\n';
+            data += 'RECIBIDO: ' + state.currency + parseFloat(state.cashReceived).toFixed(2) + '\n';
+            data += 'CAMBIO: ' + state.currency + (parseFloat(state.cashReceived) - parseFloat(state.price)).toFixed(2) + '\n';
         }
         data += '********************************\n\n';
         data += CENTER + BOLD_ON + 'POLITICAS DE GARANTIA\n\n' + BOLD_OFF;
@@ -370,7 +411,8 @@ document.addEventListener('DOMContentLoaded', () => {
                '- No hay cambios ni reembolsos.\n' +
                '- No se aceptan reclamos por\n  detalles esteticos.\n' +
                '- Bateria: solo si no carga 100%\n  o apaga antes de 20%.\n';
-        data += CENTER + '\nGRACIAS POR SU COMPRA\n' + FEED + CUT;
+        data += '\n\n\n' + CENTER + '-------------------------\nFirma del Cliente\n';
+        data += '\nGRACIAS POR SU COMPRA\n' + FEED + CUT;
 
         const bytes = encoder.encode(data);
         const CHUNK_SIZE = 100;

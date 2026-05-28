@@ -63,6 +63,9 @@
                         <button class="btn-card" data-type="Normal">Normal</button>
                         <button class="btn-card" data-type="Pro">Pro</button>
                         <button class="btn-card" data-type="Pro Max">Pro Max</button>
+                        <button class="btn-card" data-type="Plus">Plus</button>
+                        <button class="btn-card" data-type="Air">Air</button>
+                        <button class="btn-card" data-type="Mini">Mini</button>
                     </div>
                 </div>
 
@@ -108,20 +111,52 @@
                                 <input type="number" id="warranty-input" class="w-full bg-gray-50 border border-gray-200 rounded-[1.1rem] p-3.5 focus:bg-white focus:border-gray-300 focus:outline-none transition-colors font-light text-gray-900 text-sm" value="30">
                             </div>
                             <div>
-                                <label class="block text-[10px] text-gray-600 uppercase tracking-widest mb-1.5 ml-1">Método</label>
-                                <select id="payment-method" class="w-full bg-gray-50 border border-gray-200 rounded-[1.1rem] p-3.5 focus:bg-white focus:border-gray-300 focus:outline-none transition-colors font-light text-gray-900 text-sm appearance-none">
-                                    <option value="Efectivo C$">Efectivo (C$)</option>
-                                    <option value="Efectivo $">Efectivo ($)</option>
-                                    <option value="Transferencia">Transferencia</option>
-                                    <option value="Tarjeta">Tarjeta</option>
-                                    <option value="Financiado">Financiado</option>
+                                <label class="block text-[10px] text-gray-600 uppercase tracking-widest mb-1.5 ml-1">Moneda</label>
+                                <select id="currency-select" class="w-full bg-gray-50 border border-gray-200 rounded-[1.1rem] p-3.5 focus:bg-white focus:border-gray-300 focus:outline-none transition-colors font-light text-gray-900 text-sm appearance-none">
+                                    <option value="C$">Córdobas (C$)</option>
+                                    <option value="$">Dólares ($)</option>
                                 </select>
                             </div>
                         </div>
 
-                        <div>
-                            <label class="block text-[10px] text-gray-600 uppercase tracking-widest mb-1.5 ml-1">Efectivo Recibido</label>
-                            <input type="number" id="cash-input" class="w-full bg-gray-50 border border-gray-200 rounded-[1.1rem] p-3.5 focus:bg-white focus:border-gray-300 focus:outline-none transition-colors font-light text-gray-900 text-sm placeholder-gray-500" placeholder="0.00">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-[10px] text-gray-600 uppercase tracking-widest mb-1.5 ml-1">Método</label>
+                                <select id="payment-method" class="w-full bg-gray-50 border border-gray-200 rounded-[1.1rem] p-3.5 focus:bg-white focus:border-gray-300 focus:outline-none transition-colors font-light text-gray-900 text-sm appearance-none">
+                                    <option value="Efectivo">Efectivo</option>
+                                    <optgroup label="Transferencia">
+                                        <option value="Transf. BANPRO">Transferencia BANPRO</option>
+                                        <option value="Transf. LAFISE">Transferencia LAFISE</option>
+                                        <option value="Transf. FICOHSA">Transferencia FICOHSA</option>
+                                        <option value="Transf. BAC">Transferencia BAC</option>
+                                    </optgroup>
+                                    <optgroup label="Tarjeta">
+                                        <option value="Tarjeta BANPRO">Tarjeta BANPRO</option>
+                                        <option value="Tarjeta LAFISE">Tarjeta LAFISE</option>
+                                        <option value="Tarjeta FICOHSA">Tarjeta FICOHSA</option>
+                                    </optgroup>
+                                    <optgroup label="Financiamiento">
+                                        <option value="Finan. BANPRO">Financiamiento BANPRO</option>
+                                        <option value="Finan. LAFISE">Financiamiento LAFISE</option>
+                                        <option value="Finan. FICOHSA">Financiamiento FICOHSA</option>
+                                    </optgroup>
+                                </select>
+                            </div>
+                            <div id="cash-input-container">
+                                <label class="block text-[10px] text-gray-600 uppercase tracking-widest mb-1.5 ml-1">Efectivo Recibido</label>
+                                <input type="number" id="cash-input" class="w-full bg-gray-50 border border-gray-200 rounded-[1.1rem] p-3.5 focus:bg-white focus:border-gray-300 focus:outline-none transition-colors font-light text-gray-900 text-sm placeholder-gray-500" placeholder="0.00">
+                            </div>
+                            <div id="months-input-container" class="hidden">
+                                <label class="block text-[10px] text-gray-600 uppercase tracking-widest mb-1.5 ml-1">Plazo</label>
+                                <select id="months-select" class="w-full bg-gray-50 border border-gray-200 rounded-[1.1rem] p-3.5 focus:bg-white focus:border-gray-300 focus:outline-none transition-colors font-light text-gray-900 text-sm appearance-none">
+                                    <option value="3">3 Meses</option>
+                                    <option value="6">6 Meses</option>
+                                    <option value="9">9 Meses</option>
+                                    <option value="12">12 Meses</option>
+                                    <option value="18">18 Meses</option>
+                                    <option value="24">24 Meses</option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -172,6 +207,10 @@
                     <div class="ticket-row total"><span class="p-label">TOTAL:</span><span class="p-value" id="p-total">$0.00</span></div>
                 </div>
                 <div class="ticket-divider"></div>
+                <div class="ticket-signature">
+                    <div class="signature-line"></div>
+                    <p>Firma del Cliente</p>
+                </div>
                 <div class="ticket-footer">
                     <p>¡Gracias por su compra!</p>
                 </div>

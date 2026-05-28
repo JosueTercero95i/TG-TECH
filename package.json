@@ -6,11 +6,8 @@
   "author": "TG TECH",
   "scripts": {
     "start": "electron .",
-    "build": "electron-builder --win"
-  },
-  "devDependencies": {
-    "electron": "^28.2.0",
-    "electron-builder": "^24.9.1"
+    "build": "electron-builder --win",
+    "dev": "vite"
   },
   "build": {
     "appId": "com.tgtech.pos",
@@ -36,5 +33,8 @@
       "main.js",
       "TGTECH.png"
     ]
+  },
+  "devDependencies": {
+    "vite": "^8.0.14"
   }
 }
