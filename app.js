@@ -1,10 +1,12 @@
 document.addEventListener('DOMContentLoaded', () => {
     // State management
     let state = {
+        saleType: 'iphone', // 'iphone' or 'concept'
         customerName: '',
         model: '',
         type: '',
         storage: '',
+        conceptText: '',
         imei: '',
         price: '',
         warranty: '30',
@@ -34,6 +36,14 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnPrint = document.getElementById('btn-print');
     const btnClear = document.getElementById('btn-clear');
     const businessNameEl = document.getElementById('business-name');
+
+    // Tab and Concept elements
+    const tabIphone = document.getElementById('tab-iphone');
+    const tabConcept = document.getElementById('tab-concept');
+    const iphoneSelectionGroup = document.getElementById('iphone-selection-group');
+    const conceptSelectionGroup = document.getElementById('concept-selection-group');
+    const conceptInput = document.getElementById('concept-input');
+    const btnSuggestions = document.querySelectorAll('.btn-suggestion');
     
     // Bluetooth State
     let printerDevice = null;
@@ -141,6 +151,59 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function onConnected() { btnConnectBT.classList.add('connected'); statusText.innerText = 'Conectado'; }
     function onDisconnected() { btnConnectBT.classList.remove('connected'); statusText.innerText = 'Conectar BT'; printerDevice = null; printerCharacteristic = null; }
+
+    // Tab switching event listeners
+    tabIphone.addEventListener('click', () => {
+        if (state.saleType === 'iphone') return;
+        state.saleType = 'iphone';
+        
+        tabIphone.classList.add('bg-white', 'text-gray-800', 'shadow-sm', 'font-normal');
+        tabIphone.classList.remove('text-gray-500', 'font-light');
+        tabConcept.classList.add('text-gray-500', 'font-light');
+        tabConcept.classList.remove('bg-white', 'text-gray-800', 'shadow-sm', 'font-normal');
+        
+        iphoneSelectionGroup.classList.remove('hidden');
+        conceptSelectionGroup.classList.add('hidden');
+        
+        playClickSound();
+        updateDisplay();
+        validateForm();
+    });
+
+    tabConcept.addEventListener('click', () => {
+        if (state.saleType === 'concept') return;
+        state.saleType = 'concept';
+        
+        tabConcept.classList.add('bg-white', 'text-gray-800', 'shadow-sm', 'font-normal');
+        tabConcept.classList.remove('text-gray-500', 'font-light');
+        tabIphone.classList.add('text-gray-500', 'font-light');
+        tabIphone.classList.remove('bg-white', 'text-gray-800', 'shadow-sm', 'font-normal');
+        
+        iphoneSelectionGroup.classList.add('hidden');
+        conceptSelectionGroup.classList.remove('hidden');
+        
+        playClickSound();
+        updateDisplay();
+        validateForm();
+        conceptInput.focus();
+    });
+
+    // Concept input changes
+    conceptInput.addEventListener('input', (e) => {
+        state.conceptText = e.target.value;
+        updateDisplay();
+        validateForm();
+    });
+
+    // Suggestions click
+    btnSuggestions.forEach(btn => btn.addEventListener('click', () => {
+        const val = btn.dataset.suggest;
+        state.conceptText = val;
+        conceptInput.value = val;
+        playClickSound();
+        updateDisplay();
+        validateForm();
+    }));
 
     // Inputs
     customerNameInput.addEventListener('input', (e) => {
@@ -250,14 +313,22 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function validateForm() {
-        const isModelSelected = state.model !== '';
-        const isTypeSelected = state.type !== '';
-        const isStorageSelected = state.storage !== '';
         const isNameValid = state.customerName.trim().length > 2;
-        const isImeiValid = state.imei.length === 4;
         const isPriceValid = parseFloat(state.price) > 0;
         
-        const isValid = isModelSelected && isTypeSelected && isStorageSelected && isNameValid && isImeiValid && isPriceValid;
+        let isValid = false;
+        
+        if (state.saleType === 'concept') {
+            const isConceptValid = state.conceptText.trim().length > 1;
+            const isImeiValid = state.imei === '' || state.imei.length === 4;
+            isValid = isConceptValid && isNameValid && isImeiValid && isPriceValid;
+        } else {
+            const isModelSelected = state.model !== '';
+            const isTypeSelected = state.type !== '';
+            const isStorageSelected = state.storage !== '';
+            const isImeiValid = state.imei.length === 4;
+            isValid = isModelSelected && isTypeSelected && isStorageSelected && isNameValid && isImeiValid && isPriceValid;
+        }
         
         btnPrint.disabled = !isValid;
         
@@ -270,6 +341,21 @@ document.addEventListener('DOMContentLoaded', () => {
             customerNameInput.classList.remove('success');
         } else {
             customerNameInput.classList.remove('error', 'success');
+        }
+
+        // Visual feedback for concept text input
+        if (state.saleType === 'concept') {
+            if (state.conceptText.trim().length > 1) {
+                conceptInput.classList.add('success');
+                conceptInput.classList.remove('error');
+            } else if (state.conceptText.length > 0) {
+                conceptInput.classList.add('error');
+                conceptInput.classList.remove('success');
+            } else {
+                conceptInput.classList.remove('error', 'success');
+            }
+        } else {
+            conceptInput.classList.remove('error', 'success');
         }
 
         return isValid;
@@ -290,25 +376,45 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateDisplay() {
-        if (state.model && state.type && state.storage) {
-            displayProduct.innerText = `iPhone ${state.model} ${state.type} ${state.storage}`;
-            displayProduct.classList.remove('placeholder');
+        if (state.saleType === 'concept') {
+            if (state.conceptText.trim()) {
+                displayProduct.innerText = state.conceptText;
+                displayProduct.classList.remove('placeholder');
+            } else {
+                displayProduct.innerText = 'Escribe el concepto de venta';
+                displayProduct.classList.add('placeholder');
+            }
         } else {
-            displayProduct.innerText = 'Selecciona modelo, tipo y almacenamiento';
-            displayProduct.classList.add('placeholder');
+            if (state.model && state.type && state.storage) {
+                displayProduct.innerText = `iPhone ${state.model} ${state.type} ${state.storage}`;
+                displayProduct.classList.remove('placeholder');
+            } else {
+                displayProduct.innerText = 'Selecciona modelo, tipo y almacenamiento';
+                displayProduct.classList.add('placeholder');
+            }
         }
     }
 
     btnClear.addEventListener('click', resetForm);
 
     function resetForm() {
-        state.customerName = ''; state.model = ''; state.type = ''; state.storage = ''; state.imei = ''; state.price = ''; state.cashReceived = '';
+        state.saleType = 'iphone';
+        state.customerName = ''; state.model = ''; state.type = ''; state.storage = ''; state.conceptText = ''; state.imei = ''; state.price = ''; state.cashReceived = '';
         state.warranty = '30'; state.paymentMethod = 'Efectivo'; state.currency = 'C$'; state.months = '3';
         
         customerNameInput.value = '';
+        conceptInput.value = '';
         modelButtons.forEach(b => b.classList.remove('active'));
         typeButtons.forEach(b => b.classList.remove('active'));
         storageButtons.forEach(b => b.classList.remove('active'));
+        
+        tabIphone.classList.add('bg-white', 'text-gray-800', 'shadow-sm', 'font-normal');
+        tabIphone.classList.remove('text-gray-500', 'font-light');
+        tabConcept.classList.add('text-gray-500', 'font-light');
+        tabConcept.classList.remove('bg-white', 'text-gray-800', 'shadow-sm', 'font-normal');
+        
+        iphoneSelectionGroup.classList.remove('hidden');
+        conceptSelectionGroup.classList.add('hidden');
         
         imeiInput.value = ''; 
         priceInput.value = ''; 
@@ -322,6 +428,7 @@ document.addEventListener('DOMContentLoaded', () => {
         cashInputContainer.classList.remove('hidden');
         
         customerNameInput.classList.remove('error', 'success');
+        conceptInput.classList.remove('error', 'success');
         imeiInput.classList.remove('error', 'success');
         cashInput.classList.remove('error', 'success');
 
@@ -349,8 +456,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updatePrintTemplate() {
         document.getElementById('p-customer').innerText = state.customerName;
-        document.getElementById('p-product').innerText = `iPhone ${state.model} ${state.type} ${state.storage}`;
-        document.getElementById('p-imei').innerText = state.imei;
+        
+        const pProductEl = document.getElementById('p-product');
+        const pImeiEl = document.getElementById('p-imei');
+        const imeiRow = pImeiEl.closest('.ticket-row');
+        
+        if (state.saleType === 'concept') {
+            pProductEl.innerText = state.conceptText;
+            if (state.imei) {
+                pImeiEl.innerText = state.imei;
+                if (imeiRow) imeiRow.style.display = 'flex';
+            } else {
+                pImeiEl.innerText = '---';
+                if (imeiRow) imeiRow.style.display = 'none';
+            }
+        } else {
+            pProductEl.innerText = `iPhone ${state.model} ${state.type} ${state.storage}`;
+            pImeiEl.innerText = state.imei;
+            if (imeiRow) imeiRow.style.display = 'flex';
+        }
+        
         document.getElementById('p-warranty').innerText = `${state.warranty} días`;
         
         let methodText = state.paymentMethod;
@@ -395,8 +520,17 @@ document.addEventListener('DOMContentLoaded', () => {
         data += new Date().toLocaleString() + '\n';
         data += '--------------------------------\n';
         data += LEFT + 'CLIENTE: ' + state.customerName + '\n';
-        data += BOLD_ON + 'PRODUCTO: ' + `iPhone ${state.model} ${state.type} ${state.storage}` + BOLD_OFF + '\n';
-        data += 'IMEI (ULT 4): ' + state.imei + '\n';
+        
+        if (state.saleType === 'concept') {
+            data += BOLD_ON + 'CONCEPTO: ' + state.conceptText + BOLD_OFF + '\n';
+            if (state.imei) {
+                data += 'IMEI (ULT 4): ' + state.imei + '\n';
+            }
+        } else {
+            data += BOLD_ON + 'PRODUCTO: ' + `iPhone ${state.model} ${state.type} ${state.storage}` + BOLD_OFF + '\n';
+            data += 'IMEI (ULT 4): ' + state.imei + '\n';
+        }
+        
         let methodText = state.paymentMethod;
         if (state.paymentMethod.startsWith('Finan')) {
             methodText += ' (' + state.months + ' Meses)';
@@ -412,10 +546,19 @@ document.addEventListener('DOMContentLoaded', () => {
         data += '********************************\n\n';
         data += CENTER + BOLD_ON + 'POLITICAS DE GARANTIA\n\n' + BOLD_OFF;
         data += LEFT +
-               '- Cliente: ' + state.customerName + '\n' +
-               '- Producto: iPhone ' + state.model + ' ' + state.type + ' ' + state.storage + '\n' +
-               '- IMEI: ' + state.imei + '\n' +
-               '- Garantia por ' + state.warranty + ' dias\n  por fallas de fabrica.\n' +
+               '- Cliente: ' + state.customerName + '\n';
+               
+        if (state.saleType === 'concept') {
+            data += '- Concepto: ' + state.conceptText + '\n';
+            if (state.imei) {
+                data += '- IMEI: ' + state.imei + '\n';
+            }
+        } else {
+            data += '- Producto: iPhone ' + state.model + ' ' + state.type + ' ' + state.storage + '\n';
+            data += '- IMEI: ' + state.imei + '\n';
+        }
+        
+        data += '- Garantia por ' + state.warranty + ' dias\n  por fallas de fabrica.\n' +
                '- Aplica solo con factura original\n  firmada.\n' +
                '- No valida si esta vencida.\n' +
                '- No cubre: golpes, humedad,\n  caidas, sobrecargas o software.\n' +
