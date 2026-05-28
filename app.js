@@ -559,7 +559,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         data += '- Garantia por ' + state.warranty + ' dias\n  por fallas de fabrica.\n' +
-               '- Aplica solo con factura\n original firmada.\n' +
+               '- Aplica solo con factura\n  original firmada.\n' +
                '- No valida si esta vencida.\n' +
                '- No cubre: golpes, humedad,\n  caidas, sobrecargas o software.\n' +
                '- No cubre desgaste de puertos,\n  botones o alteraciones fisicas.\n' +
