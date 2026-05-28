@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
         customerName: '',
         model: '',
         type: '',
+        storage: '',
         imei: '',
         price: '',
         warranty: '30',
@@ -17,6 +18,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const customerNameInput = document.getElementById('customer-name');
     const modelButtons = document.querySelectorAll('[data-model]');
     const typeButtons = document.querySelectorAll('[data-type]');
+    const storageButtons = document.querySelectorAll('[data-storage]');
     const displayProduct = document.getElementById('display-product');
     const displayTotal = document.getElementById('display-total');
     const displayChange = document.getElementById('display-change');
@@ -164,6 +166,15 @@ document.addEventListener('DOMContentLoaded', () => {
         playClickSound();
     }));
 
+    storageButtons.forEach(btn => btn.addEventListener('click', () => {
+        storageButtons.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        state.storage = btn.dataset.storage;
+        updateDisplay();
+        validateForm();
+        playClickSound();
+    }));
+
     imeiInput.addEventListener('input', (e) => {
         // Only numbers, exactly 4 digits
         let val = e.target.value.replace(/\D/g, '').slice(0, 4);
@@ -241,11 +252,12 @@ document.addEventListener('DOMContentLoaded', () => {
     function validateForm() {
         const isModelSelected = state.model !== '';
         const isTypeSelected = state.type !== '';
+        const isStorageSelected = state.storage !== '';
         const isNameValid = state.customerName.trim().length > 2;
         const isImeiValid = state.imei.length === 4;
         const isPriceValid = parseFloat(state.price) > 0;
         
-        const isValid = isModelSelected && isTypeSelected && isNameValid && isImeiValid && isPriceValid;
+        const isValid = isModelSelected && isTypeSelected && isStorageSelected && isNameValid && isImeiValid && isPriceValid;
         
         btnPrint.disabled = !isValid;
         
@@ -278,11 +290,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function updateDisplay() {
-        if (state.model && state.type) {
-            displayProduct.innerText = `iPhone ${state.model} ${state.type}`;
+        if (state.model && state.type && state.storage) {
+            displayProduct.innerText = `iPhone ${state.model} ${state.type} ${state.storage}`;
             displayProduct.classList.remove('placeholder');
         } else {
-            displayProduct.innerText = 'Selecciona modelo y tipo';
+            displayProduct.innerText = 'Selecciona modelo, tipo y almacenamiento';
             displayProduct.classList.add('placeholder');
         }
     }
@@ -290,12 +302,13 @@ document.addEventListener('DOMContentLoaded', () => {
     btnClear.addEventListener('click', resetForm);
 
     function resetForm() {
-        state.customerName = ''; state.model = ''; state.type = ''; state.imei = ''; state.price = ''; state.cashReceived = '';
+        state.customerName = ''; state.model = ''; state.type = ''; state.storage = ''; state.imei = ''; state.price = ''; state.cashReceived = '';
         state.warranty = '30'; state.paymentMethod = 'Efectivo'; state.currency = 'C$'; state.months = '3';
         
         customerNameInput.value = '';
         modelButtons.forEach(b => b.classList.remove('active'));
         typeButtons.forEach(b => b.classList.remove('active'));
+        storageButtons.forEach(b => b.classList.remove('active'));
         
         imeiInput.value = ''; 
         priceInput.value = ''; 
@@ -336,7 +349,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function updatePrintTemplate() {
         document.getElementById('p-customer').innerText = state.customerName;
-        document.getElementById('p-product').innerText = `iPhone ${state.model} ${state.type}`;
+        document.getElementById('p-product').innerText = `iPhone ${state.model} ${state.type} ${state.storage}`;
         document.getElementById('p-imei').innerText = state.imei;
         document.getElementById('p-warranty').innerText = `${state.warranty} días`;
         
@@ -382,7 +395,7 @@ document.addEventListener('DOMContentLoaded', () => {
         data += new Date().toLocaleString() + '\n';
         data += '--------------------------------\n';
         data += LEFT + 'CLIENTE: ' + state.customerName + '\n';
-        data += BOLD_ON + 'PRODUCTO: ' + `iPhone ${state.model} ${state.type}` + BOLD_OFF + '\n';
+        data += BOLD_ON + 'PRODUCTO: ' + `iPhone ${state.model} ${state.type} ${state.storage}` + BOLD_OFF + '\n';
         data += 'IMEI (ULT 4): ' + state.imei + '\n';
         let methodText = state.paymentMethod;
         if (state.paymentMethod.startsWith('Finan')) {
@@ -400,7 +413,7 @@ document.addEventListener('DOMContentLoaded', () => {
         data += CENTER + BOLD_ON + 'POLITICAS DE GARANTIA\n\n' + BOLD_OFF;
         data += LEFT +
                '- Cliente: ' + state.customerName + '\n' +
-               '- Producto: iPhone ' + state.model + ' ' + state.type + '\n' +
+               '- Producto: iPhone ' + state.model + ' ' + state.type + ' ' + state.storage + '\n' +
                '- IMEI: ' + state.imei + '\n' +
                '- Garantia por ' + state.warranty + ' dias\n  por fallas de fabrica.\n' +
                '- Aplica solo con factura original\n  firmada.\n' +
