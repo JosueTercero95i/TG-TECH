@@ -558,17 +558,20 @@ document.addEventListener('DOMContentLoaded', () => {
             data += '- IMEI: ' + state.imei + '\n';
         }
         
-        data += '- Garantia por ' + state.warranty + ' dias\n  por fallas de fabrica.\n' +
-               '- Aplica solo con factura\n  original firmada.\n' +
-               '- No valida si esta vencida.\n' +
-               '- No cubre: golpes, humedad,\n  caidas, sobrecargas o software.\n' +
-               '- No cubre desgaste de puertos,\n  botones o alteraciones fisicas.\n' +
-               '- Revision tecnica previa (24h).\n' +
-               '- No hay cambios ni reembolsos.\n' +
-               '- No se aceptan reclamos por\n  detalles esteticos.\n' +
-               '- Bateria: solo si no carga 100%\n  o apaga antes de 20%.\n';
-        data += '\n\n\n' + CENTER + '-------------------------\nFirma del Cliente\n';
-        data += '\nGRACIAS POR SU COMPRA\n' + FEED + CUT;
+data += '- Garantia por ' + state.warranty + ' dias\n  por fallas de fabrica.\n' +
+       '- Aplica solo con factura\n' +
+       '  original firmada.\n' +
+       '- No valida si esta vencida.\n' +
+       '- No cubre: golpes, humedad,\n  caidas, sobrecargas o software.\n' +
+       '- No cubre desgaste de puertos,\n  botones o alteraciones fisicas.\n' +
+       '- Revision tecnica previa (24h).\n' +
+       '- No hay cambios ni reembolsos.\n' +
+       '- No se aceptan reclamos por\n  detalles esteticos.\n' +
+       '- Bateria: solo si no carga 100%\n  o apaga antes de 20%.\n';
+
+data += '\n\n\n' + CENTER + '-------------------------\nFirma del Cliente\n';
+
+data += '\nGRACIAS POR SU COMPRA\n' + FEED + CUT;
 
         const bytes = encoder.encode(data);
         const CHUNK_SIZE = 100;
