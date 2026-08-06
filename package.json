@@ -31,6 +31,7 @@
       "style.css",
       "app.js",
       "main.js",
+      "preload.js",
       "TGTECH.png"
     ]
   },

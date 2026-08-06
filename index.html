@@ -208,9 +208,13 @@
                         <span id="display-total" class="text-3xl font-normal tracking-tight">$0.00</span>
                     </div>
 
-                    <div class="grid grid-cols-[1fr_auto] gap-3">
+                    <div class="grid grid-cols-[1fr_auto_auto] gap-3">
                         <button id="btn-print" class="bg-gray-800 text-white rounded-[1.1rem] py-4 px-6 text-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-900 focus:outline-none font-normal" disabled>
                             Imprimir Ticket
+                        </button>
+                        <button id="btn-pdf" class="flex items-center justify-center gap-2 bg-white text-gray-700 rounded-[1.1rem] py-4 px-5 transition-all hover:bg-gray-50 border border-gray-200 focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed font-normal" disabled>
+                            <i class="fa-solid fa-file-pdf text-lg"></i>
+                            <span class="text-sm font-light">PDF</span>
                         </button>
                         <button id="btn-clear" class="bg-gray-50 text-gray-600 rounded-[1.1rem] py-4 px-6 transition-all hover:bg-gray-100 border border-gray-200 focus:outline-none">
                             <i class="fa-solid fa-trash-can text-xl"></i>
@@ -256,6 +260,7 @@
 
     <!-- GSAP & Main Script -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="app.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {

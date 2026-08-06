@@ -34,6 +34,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const monthsInputContainer = document.getElementById('months-input-container');
     const monthsSelect = document.getElementById('months-select');
     const btnPrint = document.getElementById('btn-print');
+    const btnPdf = document.getElementById('btn-pdf');
     const btnClear = document.getElementById('btn-clear');
     const businessNameEl = document.getElementById('business-name');
 
@@ -49,6 +50,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let printerDevice = null;
     let printerCharacteristic = null;
     let logoBytes = null; // Stores processed image
+    let logoDataUrl = null; // Stores logo as base64 for PDF
     const btnConnectBT = document.getElementById('btn-connect-bt');
     const statusText = btnConnectBT.querySelector('.status-text');
 
@@ -57,6 +59,14 @@ document.addEventListener('DOMContentLoaded', () => {
         const img = new Image();
         img.onload = () => processImage(img);
         img.src = 'TGTECH.png';
+        fetch('TGTECH.png')
+            .then(r => r.blob())
+            .then(b => {
+                const reader = new FileReader();
+                reader.onloadend = () => { logoDataUrl = reader.result; };
+                reader.readAsDataURL(b);
+            })
+            .catch(() => {});
     });
 
     function processImage(img) {
@@ -331,6 +341,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
         
         btnPrint.disabled = !isValid;
+        btnPdf.disabled = !isValid;
         
         // Visual feedback for name
         if (state.customerName.trim().length > 2) {
@@ -580,7 +591,381 @@ data += '\nGRACIAS POR SU COMPRA\n' + FEED + CUT;
         }
     }
 
-    function triggerSuccess() {
+    btnPdf.addEventListener('click', async () => {
+        if (!validateForm()) {
+            alert('Por favor complete todos los campos obligatorios'); return;
+        }
+        const filename = `FACTURA (${state.customerName.trim()})`;
+        try {
+            if (window.electronAPI) {
+                const html = buildInvoiceHtml();
+                const result = await window.electronAPI.generatePdf(html, filename);
+                if (!result.canceled) {
+                    triggerSuccess('La factura PDF se descargó correctamente.');
+                }
+            } else {
+                downloadPdfBrowser(filename);
+                triggerSuccess('La factura PDF se descargó correctamente.');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('No se pudo generar la factura PDF.');
+        }
+    });
+
+    function getFolio() {
+        const now = new Date();
+        const d = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}${String(now.getDate()).padStart(2, '0')}`;
+        let seq = parseInt(localStorage.getItem('tg_folio_seq') || '0', 10) + 1;
+        localStorage.setItem('tg_folio_seq', String(seq));
+        return `FAC-${d}-${String(seq).padStart(4, '0')}`;
+    }
+
+    function buildInvoiceHtml() {
+        const businessName = (businessNameEl.innerText || 'TG TECH').trim();
+        const productText = state.saleType === 'concept'
+            ? state.conceptText
+            : `iPhone ${state.model} ${state.type} ${state.storage}`;
+
+        let methodText = state.paymentMethod;
+        if (state.paymentMethod.startsWith('Finan')) {
+            methodText += ` (${state.months} Meses)`;
+        }
+
+        const total = parseFloat(state.price || 0).toFixed(2);
+        const hasCash = state.cashReceived && state.cashReceived !== '' && !state.paymentMethod.startsWith('Finan');
+        const cash = parseFloat(state.cashReceived || 0).toFixed(2);
+        const change = hasCash ? (parseFloat(cash) - parseFloat(total)).toFixed(2) : null;
+
+        const rows = `
+            <tr><td class="lbl">CLIENTE</td><td>${escapeHtml(state.customerName)}</td></tr>
+            <tr><td class="lbl">PRODUCTO / CONCEPTO</td><td>${escapeHtml(productText)}</td></tr>
+            <tr><td class="lbl">IMEI (ÚLT. 4)</td><td>${escapeHtml(state.imei || '---')}</td></tr>
+            <tr><td class="lbl">GARANTÍA</td><td>${escapeHtml(state.warranty || '30')} días</td></tr>
+            <tr><td class="lbl">MÉTODO DE PAGO</td><td>${escapeHtml(methodText)} (${escapeHtml(state.currency)})</td></tr>
+        `;
+
+        return `<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Factura ${businessName}</title>
+<style>
+    @page { size: A4; margin: 0; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "Inter", "Helvetica Neue", Arial, sans-serif; color: #111827; background: #fff; }
+    .invoice { width: 210mm; min-height: 297mm; padding: 14mm; display: flex; flex-direction: column; }
+    .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2.5px solid #111827; padding-bottom: 14px; margin-bottom: 18px; }
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .brand img { height: 58px; width: auto; }
+    .brand .name { font-size: 24px; font-weight: 700; letter-spacing: 1px; line-height: 1.1; }
+    .brand .info { font-size: 11px; color: #4b5563; line-height: 1.55; }
+    .doc-title { text-align: right; }
+    .doc-title h1 { font-size: 30px; font-weight: 700; letter-spacing: 3px; }
+    .doc-title p { font-size: 11px; color: #4b5563; margin-top: 3px; }
+    .meta { display: flex; justify-content: space-between; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px 16px; margin-bottom: 18px; font-size: 12px; }
+    .meta .lbl { color: #6b7280; font-size: 10px; text-transform: uppercase; letter-spacing: 1px; }
+    .meta .col > div { margin-bottom: 5px; }
+    .meta .col > div:last-child { margin-bottom: 0; }
+    table.info { width: 100%; border-collapse: collapse; margin-bottom: 18px; font-size: 13px; }
+    table.info td { padding: 9px 12px; border: 1px solid #e5e7eb; vertical-align: top; }
+    table.info td.lbl { background: #f9fafb; font-weight: 600; width: 38%; color: #374151; font-size: 12px; }
+    .total-box { display: flex; justify-content: flex-end; align-items: center; gap: 16px; margin-bottom: 20px; }
+    .total-box .t-label { font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 1px; }
+    .total-box .t-value { background: #111827; color: #fff; padding: 13px 26px; border-radius: 10px; font-size: 22px; font-weight: 700; }
+    .warranty { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 14px 18px; font-size: 11px; line-height: 1.7; color: #374151; flex: 1; }
+    .warranty h3 { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; color: #111827; }
+    .signature { text-align: center; margin-top: 56px; }
+    .signature .line { border-bottom: 1.5px solid #111827; width: 240px; margin: 0 auto 6px; }
+    .signature p { font-size: 11px; color: #4b5563; }
+    .footer { text-align: center; margin-top: 20px; font-size: 11px; color: #6b7280; border-top: 1px solid #e5e7eb; padding-top: 12px; }
+</style>
+</head>
+<body>
+    <div class="invoice">
+        <div class="header">
+            <div class="brand">
+                ${logoDataUrl ? `<img src="${logoDataUrl}" alt="Logo">` : ''}
+                <div>
+                    <div class="name">${escapeHtml(businessName)}</div>
+                    <div class="info">Tel: +505 8537-9833<br>Rotonda Cristo Rey, 2c Al Sur</div>
+                </div>
+            </div>
+            <div class="doc-title">
+                <h1>FACTURA</h1>
+                <p>${escapeHtml(getFolio())}</p>
+            </div>
+        </div>
+
+        <div class="meta">
+            <div class="col">
+                <div><span class="lbl">Fecha:&nbsp;</span>${new Date().toLocaleString()}</div>
+                <div><span class="lbl">Atendido por:&nbsp;</span>${escapeHtml(businessName)}</div>
+            </div>
+            <div class="col">
+                <div><span class="lbl">Moneda:&nbsp;</span>${escapeHtml(state.currency)}</div>
+                <div><span class="lbl">Documento:&nbsp;</span>Factura Digital</div>
+            </div>
+        </div>
+
+        <table class="info">
+            ${rows}
+        </table>
+
+        <div class="total-box">
+            <span class="t-label">Total a Pagar</span>
+            <span class="t-value">${escapeHtml(state.currency)}${total}</span>
+        </div>
+
+        ${hasCash ? `<div class="total-box" style="justify-content: flex-start; margin-bottom: 10px;">
+            <div style="font-size: 12px; color: #374151; line-height: 1.8;">
+                Efectivo recibido: <b>${escapeHtml(state.currency)}${cash}</b><br>
+                Cambio: <b>${escapeHtml(state.currency)}${change}</b>
+            </div>
+        </div>` : ''}
+
+        <div class="warranty">
+            <h3>Políticas de Garantía</h3>
+            - Garantía por ${escapeHtml(state.warranty || '30')} días por fallas de fábrica.<br>
+            - Aplica solo con factura original firmada.<br>
+            - No valida si está vencida.<br>
+            - No cubre: golpes, humedad, caídas, sobrecargas o software.<br>
+            - No cubre desgaste de puertos, botones o alteraciones físicas.<br>
+            - Revisión técnica previa (24h).<br>
+            - No hay cambios ni reembolsos.<br>
+            - No se aceptan reclamos por detalles estéticos.<br>
+            - Batería: solo si no carga 100% o apaga antes de 20%.
+        </div>
+
+        <div class="signature">
+            <div class="line"></div>
+            <p>Firma del Cliente</p>
+        </div>
+
+        <div class="footer">¡Gracias por su compra! — ${escapeHtml(businessName)}</div>
+    </div>
+</body>
+</html>`;
+    }
+
+    function downloadPdfBrowser(filename) {
+        if (!window.jspdf) {
+            alert('No se pudo cargar la librería de PDF.');
+            return;
+        }
+
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({ orientation: 'p', unit: 'mm', format: 'a4' });
+
+        const businessName = (businessNameEl.innerText || 'TG TECH').trim();
+        const productText = state.saleType === 'concept'
+            ? state.conceptText
+            : `iPhone ${state.model} ${state.type} ${state.storage}`;
+
+        let methodText = state.paymentMethod;
+        if (state.paymentMethod.startsWith('Finan')) {
+            methodText += ` (${state.months} Meses)`;
+        }
+
+        const totalStr = `${state.currency}${parseFloat(state.price || 0).toFixed(2)}`;
+        const folioStr = getFolio();
+        const dateStr = new Date().toLocaleString();
+
+        let curY = 15;
+
+        // Logo
+        if (logoDataUrl) {
+            try {
+                doc.addImage(logoDataUrl, 'PNG', 15, curY, 25, 25);
+            } catch (e) {
+                console.error('Logo error', e);
+            }
+        }
+
+        const textX = logoDataUrl ? 44 : 15;
+
+        // Business Name & Address
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(16);
+        doc.setTextColor(17, 24, 39);
+        doc.text(businessName, textX, curY + 7);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(75, 85, 99);
+        doc.text('Tel: +505 8537-9833\nRotonda Cristo Rey, 2c Al Sur', textX, curY + 13);
+
+        // Title & Folio
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(22);
+        doc.setTextColor(17, 24, 39);
+        doc.text('FACTURA', 195, curY + 8, { align: 'right' });
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(75, 85, 99);
+        doc.text(folioStr, 195, curY + 14, { align: 'right' });
+
+        curY += 28;
+
+        // Separator Line
+        doc.setDrawColor(17, 24, 39);
+        doc.setLineWidth(0.6);
+        doc.line(15, curY, 195, curY);
+
+        curY += 6;
+
+        // Meta Box
+        doc.setFillColor(249, 250, 251);
+        doc.setDrawColor(229, 231, 235);
+        doc.setLineWidth(0.3);
+        doc.rect(15, curY, 180, 16, 'FD');
+
+        doc.setFontSize(8.5);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(107, 114, 128);
+        doc.text('FECHA:', 19, curY + 6);
+        doc.text('ATENDIDO POR:', 19, curY + 12);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(17, 24, 39);
+        doc.text(dateStr, 33, curY + 6);
+        doc.text(businessName, 45, curY + 12);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(107, 114, 128);
+        doc.text('MONEDA:', 110, curY + 6);
+        doc.text('DOCUMENTO:', 110, curY + 12);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(17, 24, 39);
+        doc.text(state.currency, 128, curY + 6);
+        doc.text('Factura Digital', 133, curY + 12);
+
+        curY += 22;
+
+        // Data Table
+        const tableData = [
+            ['CLIENTE', state.customerName],
+            ['PRODUCTO / CONCEPTO', productText],
+            ['IMEI (ÚLT. 4)', state.imei || '---'],
+            ['GARANTÍA', `${state.warranty || '30'} días`],
+            ['MÉTODO DE PAGO', `${methodText} (${state.currency})`]
+        ];
+
+        tableData.forEach(([label, val]) => {
+            doc.setFillColor(249, 250, 251);
+            doc.setDrawColor(229, 231, 235);
+            doc.rect(15, curY, 60, 9, 'FD');
+
+            doc.setFillColor(255, 255, 255);
+            doc.rect(75, curY, 120, 9, 'FD');
+
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(8.5);
+            doc.setTextColor(55, 65, 81);
+            doc.text(label, 19, curY + 6);
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9.5);
+            doc.setTextColor(17, 24, 39);
+            doc.text(String(val), 79, curY + 6);
+
+            curY += 9;
+        });
+
+        curY += 6;
+
+        // Total Box
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(10);
+        doc.setTextColor(107, 114, 128);
+        doc.text('TOTAL A PAGAR:', 120, curY + 8);
+
+        doc.setFillColor(17, 24, 39);
+        doc.rect(153, curY, 42, 12, 'F');
+
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(13);
+        doc.text(totalStr, 174, curY + 8, { align: 'center' });
+
+        doc.setTextColor(17, 24, 39);
+
+        curY += 18;
+
+        // Cash / Change info
+        const hasCash = state.cashReceived && state.cashReceived !== '' && !state.paymentMethod.startsWith('Finan');
+        if (hasCash) {
+            const cashNum = parseFloat(state.cashReceived || 0);
+            const totalNum = parseFloat(state.price || 0);
+            const changeNum = cashNum - totalNum;
+
+            doc.setFont('helvetica', 'normal');
+            doc.setFontSize(9);
+            doc.setTextColor(55, 65, 81);
+            doc.text(`Efectivo recibido: ${state.currency}${cashNum.toFixed(2)}    |    Cambio: ${state.currency}${(changeNum >= 0 ? changeNum : 0).toFixed(2)}`, 15, curY);
+            curY += 10;
+        }
+
+        // Warranty Box
+        doc.setFillColor(249, 250, 251);
+        doc.setDrawColor(229, 231, 235);
+        doc.rect(15, curY, 180, 58, 'FD');
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9.5);
+        doc.setTextColor(17, 24, 39);
+        doc.text('POLÍTICAS DE GARANTÍA', 20, curY + 7);
+
+        const bullets = [
+            `- Garantía por ${state.warranty || '30'} días por fallas de fábrica.`,
+            '- Aplica solo con factura original firmada.',
+            '- No válida si está vencida.',
+            '- No cubre: golpes, humedad, caídas, sobrecargas o software.',
+            '- No cubre desgaste de puertos, botones o alteraciones físicas.',
+            '- Revisión técnica previa (24h).',
+            '- No hay cambios ni reembolsos.',
+            '- No se aceptan reclamos por detalles estéticos.',
+            '- Batería: solo si no carga 100% o apaga antes de 20%.'
+        ];
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(55, 65, 81);
+
+        let bY = curY + 13;
+        bullets.forEach(b => {
+            doc.text(b, 20, bY);
+            bY += 4.8;
+        });
+
+        curY += 75;
+
+        // Signature Line
+        doc.setDrawColor(17, 24, 39);
+        doc.setLineWidth(0.5);
+        doc.line(75, curY, 135, curY);
+
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(9);
+        doc.setTextColor(75, 85, 99);
+        doc.text('Firma del Cliente', 105, curY + 5, { align: 'center' });
+
+        // Footer
+        doc.setFontSize(9);
+        doc.setTextColor(107, 114, 128);
+        doc.text(`¡Gracias por su compra! — ${businessName}`, 105, 285, { align: 'center' });
+
+        doc.save(filename + '.pdf');
+    }
+
+    function escapeHtml(text) {
+        return String(text).replace(/[&<>"']/g, (c) => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[c]));
+    }
+
+    function triggerSuccess(message) {
         const overlay = document.createElement('div');
         overlay.className = 'success-overlay';
         overlay.innerHTML = `
@@ -596,7 +981,7 @@ data += '\nGRACIAS POR SU COMPRA\n' + FEED + CUT;
                 </div>
                 <div class="success-content">
                     <h3 class="success-title">Venta Exitosa</h3>
-                    <p class="success-msg">El ticket ha sido procesado e impreso correctamente.</p>
+                    <p class="success-msg">${message || 'El ticket ha sido procesado e impreso correctamente.'}</p>
                 </div>
             </div>
         `;

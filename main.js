@@ -1,5 +1,6 @@
-const { app, BrowserWindow } = require('electron');
+const { app, BrowserWindow, ipcMain } = require('electron');
 const path = require('path');
+const fs = require('fs');
 
 function createWindow() {
     const win = new BrowserWindow({
@@ -11,7 +12,8 @@ function createWindow() {
         icon: path.join(__dirname, 'TGTECH.png'),
         webPreferences: {
             nodeIntegration: false,
-            contextIsolation: true
+            contextIsolation: true,
+            preload: path.join(__dirname, 'preload.js')
         }
     });
 
@@ -37,6 +39,39 @@ function createWindow() {
 }
 
 app.whenReady().then(() => {
+    ipcMain.handle('generate-pdf', async (event, html, filename) => {
+        const pdfWindow = new BrowserWindow({
+            show: false,
+            webPreferences: { offscreen: true }
+        });
+        try {
+            await pdfWindow.loadURL('data:text/html;charset=utf-8,' + encodeURIComponent(html));
+            const pdfData = await pdfWindow.webContents.printToPDF({
+                pageSize: 'A4',
+                printBackground: true,
+                margins: { top: 0, bottom: 0, left: 0, right: 0 }
+            });
+            pdfWindow.destroy();
+
+            const safeName = String(filename || 'Factura-TG-TECH')
+                .replace(/[\\/:*?"<>|]+/g, '')
+                .trim() || 'Factura-TG-TECH';
+            const downloads = app.getPath('downloads');
+            let filePath = path.join(downloads, `${safeName}.pdf`);
+            let counter = 1;
+            while (fs.existsSync(filePath)) {
+                filePath = path.join(downloads, `${safeName} (${counter}).pdf`);
+                counter++;
+            }
+            fs.writeFileSync(filePath, pdfData);
+            return { canceled: false, filePath, auto: true };
+        } catch (error) {
+            console.error(error);
+            pdfWindow.destroy();
+            throw error;
+        }
+    });
+
     createWindow();
 
     app.on('activate', () => {
