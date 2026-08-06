@@ -54,10 +54,22 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnConnectBT = document.getElementById('btn-connect-bt');
     const statusText = btnConnectBT.querySelector('.status-text');
 
+    // Helper to hide loader regardless of image outcome
+    function hideLoader() {
+        setTimeout(() => {
+            const loader = document.getElementById('loader');
+            if (loader) {
+                loader.style.opacity = '0';
+                setTimeout(() => loader.remove(), 500);
+            }
+        }, 600);
+    }
+
     // Auto-load TGTECH logo
     window.addEventListener('load', () => {
         const img = new Image();
         img.onload = () => processImage(img);
+        img.onerror = () => hideLoader(); // loader desaparece aunque falle la imagen
         img.src = 'TGTECH.png';
         fetch('TGTECH.png')
             .then(r => r.blob())
@@ -109,13 +121,7 @@ document.addEventListener('DOMContentLoaded', () => {
         logoBytes.set(bytes, header.length);
         
         // Ocultar loader con un pequeño retraso intencional para que sea visible
-        setTimeout(() => {
-            const loader = document.getElementById('loader');
-            if (loader) {
-                loader.style.opacity = '0';
-                setTimeout(() => loader.remove(), 500);
-            }
-        }, 1200);
+        hideLoader();
     }
 
     // Set Default Business Name
