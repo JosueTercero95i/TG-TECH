@@ -962,7 +962,25 @@ data += '\nGRACIAS POR SU COMPRA\n' + FEED + CUT;
         doc.setTextColor(107, 114, 128);
         doc.text(`¡Gracias por su compra! — ${businessName}`, 105, 285, { align: 'center' });
 
-        doc.save(filename + '.pdf');
+        const pdfBlob = doc.output('blob');
+        const url = URL.createObjectURL(pdfBlob);
+        const fileName = filename + '.pdf';
+
+        if (navigator.share && navigator.canShare) {
+            try {
+                const file = new File([pdfBlob], fileName, { type: 'application/pdf' });
+                if (navigator.canShare({ files: [file] })) {
+                    navigator.share({ files: [file], title: fileName }).then(() => {
+                        URL.revokeObjectURL(url);
+                    }).catch(() => {
+                        window.open(url, '_blank');
+                    });
+                    return;
+                }
+            } catch (e) { /* fallback below */ }
+        }
+
+        window.open(url, '_blank');
     }
 
     function escapeHtml(text) {
